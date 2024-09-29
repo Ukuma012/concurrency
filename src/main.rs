@@ -1,17 +1,22 @@
-use std::sync::RwLock;
+use std::sync::{Arc, Barrier};
+use std::thread;
 
 fn main() {
-    let lock = RwLock::new(10);
-    {
-        let v1 = lock.read().unwrap();
-        let v2 = lock.read().unwrap();
-        println!("v1 = {}", v1);
-        println!("v2 = {}", v2);
+    let mut v = Vec::new();
+
+    let barrier = Arc::new(Barrier::new(10));
+
+    for _ in 0..10 {
+        let b = barrier.clone();
+        let th = thread::spawn(move || {
+            b.wait();
+            println!("finished barrier");
+        });
+        v.push(th);
     }
 
-    {
-        let mut v = lock.write().unwrap();
-        *v = 7;
-        println!("v = {}", v);
+    for th in v {
+        th.join().unwrap();
     }
+
 }
